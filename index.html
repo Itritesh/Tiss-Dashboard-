@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TISS SSE | Attendance Dashboard</title>
+    <title>TISS SSE | Arrival Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,221 +15,150 @@
         
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: #fdfdfd;
-            background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px);
-            background-size: 24px 24px;
-            min-height: 100vh;
-            scroll-behavior: smooth;
+            background: #f8fafc;
             color: #1e293b;
+            min-height: 100vh;
         }
 
         .gold-brand {
             background: var(--gold-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
 
         .header-curve {
             background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
-            border-bottom: 5px solid #fbbf24;
-            position: relative;
+            border-bottom: 4px solid #fbbf24;
         }
 
         .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 2rem;
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .glass-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+            background: white;
+            border-radius: 1.5rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
-        /* Stats Cards */
-        .stat-card-total { border-bottom: 4px solid #94a3b8; }
-        .stat-card-present { border-bottom: 4px solid #10b981; }
-        .stat-card-absent { border-bottom: 4px solid #ef4444; }
-        .stat-card-guardians { border-bottom: 4px solid #f59e0b; }
+        /* 3. Present / Absentia row coloring */
+        .row-present { background-color: #f0fdf4 !important; } /* Light Green */
+        .row-absentia { background-color: #fef2f2 !important; } /* Light Red */
+        .row-present:hover { background-color: #dcfce7 !important; }
+        .row-absentia:hover { background-color: #fee2e2 !important; }
 
-        /* Button Animations */
-        .btn-yes { @apply border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-all duration-200 opacity-30; }
-        .btn-yes.active { 
-            @apply bg-emerald-600 border-emerald-700 text-white opacity-100 scale-105; 
-            box-shadow: 0 4px 15px -3px rgba(5, 150, 105, 0.4); 
+        /* 2. Confirm Button Styles */
+        .btn-confirm { @apply border-2 border-slate-300 text-slate-500 hover:bg-slate-100 transition-all duration-200; }
+        .btn-confirm.active { 
+            @apply bg-blue-600 border-blue-700 text-white scale-105; 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); 
         }
-        
-        .btn-no { @apply border-2 border-red-500 text-red-600 hover:bg-red-50 transition-all duration-200 opacity-30; }
-        .btn-no.active { 
-            @apply bg-red-600 border-red-700 text-white opacity-100 scale-105; 
-            box-shadow: 0 4px 15px -3px rgba(220, 38, 38, 0.4); 
-        }
-        
-        /* Table Row Styling */
-        .row-present { background-color: rgba(16, 185, 129, 0.08) !important; border-left: 6px solid #10b981; }
-        .row-absent { background-color: rgba(239, 68, 68, 0.06) !important; border-left: 6px solid #ef4444; }
-        .row-pending { border-left: 6px solid #cbd5e1; }
 
-        .search-shadow { box-shadow: 0 10px 40px -10px rgba(6, 95, 70, 0.12); }
-
-        /* Animations */
-        @keyframes slideIn { 
-            from { opacity: 0; transform: translateY(15px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-        
-        .enroll-dropdown { 
-            display: none; 
-            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
-        }
-        .enroll-dropdown.active { display: block; }
+        /* Summary Card Borders */
+        .stat-total { border-top: 4px solid #64748b; }
+        .stat-present { border-top: 4px solid #10b981; }
+        .stat-absent { border-top: 4px solid #ef4444; }
+        .stat-arrived { border-top: 4px solid #2563eb; }
+        .stat-guardians { border-top: 4px solid #f59e0b; }
 
         #toast { 
             visibility: hidden; min-width: 250px; background-color: #1e293b; color: white; 
             text-align: center; border-radius: 50px; padding: 16px; position: fixed; 
             z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); 
-            font-weight: 700; box-shadow: 0 15px 30px rgba(0,0,0,0.3); 
+            font-weight: 700;
         }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        
         @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
         @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
 
-        /* Floating Action Button */
-        #backToTopBtn {
-            position: fixed; bottom: 30px; right: 30px;
-            background: #065f46; color: white; width: 50px; height: 50px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); cursor: pointer;
-            opacity: 0; transform: translateY(20px) scale(0);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 99;
-        }
-        #backToTopBtn.visible { opacity: 1; transform: translateY(0) scale(1); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="pb-10">
 
-    <!-- Header Section -->
-    <header class="header-curve py-16 px-4 text-center mb-16 overflow-hidden">
-        <h1 class="text-white text-3xl md:text-6xl font-extrabold tracking-tighter uppercase mb-2">
+    <header class="header-curve py-10 px-4 text-center mb-16">
+        <h1 class="text-white text-2xl md:text-5xl font-extrabold uppercase mb-2 tracking-tight">
             <span class="gold-brand">Tata Institute Of Social Sciences</span>
         </h1>
-        <p class="text-emerald-100 text-sm md:text-xl italic font-medium opacity-90 tracking-wide">
-            School of Skill Education (SSE) — Convocation Portal
+        <p class="text-emerald-100 text-xs md:text-lg font-medium opacity-80 uppercase tracking-widest">
+            SSE Convocation Arrival Management
         </p>
     </header>
 
-    <main class="max-w-[1500px] mx-auto px-4 md:px-8">
+    <main class="max-w-[1600px] mx-auto px-4">
         
-        <!-- Summary Dashboard -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 -mt-24 relative z-10">
-            <div class="glass-card p-8 stat-card-total">
-                <p class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Students</p>
-                <h4 id="statTotal" class="text-5xl font-extrabold text-slate-800">0</h4>
+        <!-- 5. Summary Cards Section -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10 -mt-20 relative z-10">
+            <div class="glass-card p-6 stat-total">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Students</p>
+                <h4 id="statTotal" class="text-3xl font-extrabold text-slate-800">0</h4>
             </div>
-            <div class="glass-card p-8 stat-card-present">
-                <p class="text-[11px] font-black text-emerald-500 uppercase tracking-widest mb-1">Present</p>
-                <h4 id="statPresent" class="text-5xl font-extrabold text-emerald-600">0</h4>
+            <div class="glass-card p-6 stat-present">
+                <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Data: Present</p>
+                <h4 id="statPresent" class="text-3xl font-extrabold text-emerald-600">0</h4>
             </div>
-            <div class="glass-card p-8 stat-card-absent">
-                <p class="text-[11px] font-black text-red-500 uppercase tracking-widest mb-1">Absent</p>
-                <h4 id="statAbsent" class="text-5xl font-extrabold text-red-600">0</h4>
+            <div class="glass-card p-6 stat-absent">
+                <p class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Data: Absentia</p>
+                <h4 id="statAbsent" class="text-3xl font-extrabold text-red-600">0</h4>
             </div>
-            <div class="glass-card p-8 stat-card-guardians">
-                <p class="text-[11px] font-black text-amber-500 uppercase tracking-widest mb-1">Total Guardians</p>
-                <h4 id="statGuardians" class="text-5xl font-extrabold text-amber-600">0</h4>
+            <div class="glass-card p-6 stat-arrived">
+                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Confirmed Arrivals</p>
+                <h4 id="statConfirmed" class="text-3xl font-extrabold text-blue-600">0</h4>
+            </div>
+            <div class="glass-card p-6 stat-guardians">
+                <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Total Guardians</p>
+                <h4 id="statGuardians" class="text-3xl font-extrabold text-amber-600">0</h4>
             </div>
         </div>
 
-        <!-- Toolbar Section -->
-        <div class="glass-card p-5 mb-10 flex flex-col xl:flex-row items-center gap-5 search-shadow sticky top-6 z-50">
-            <div class="relative w-full xl:max-w-2xl">
-                <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <!-- Controls -->
+        <div class="glass-card p-4 mb-8 flex flex-col lg:flex-row items-center gap-4 sticky top-4 z-50 shadow-xl">
+            <div class="relative flex-grow w-full">
+                <input type="text" id="searchInput" oninput="render()" class="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-700 transition-all" placeholder="Search by Name, UID or Hub...">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" id="searchInput" oninput="render()" class="w-full pl-14 pr-12 py-5 rounded-3xl bg-slate-50 border-none outline-none focus:ring-4 focus:ring-emerald-100 font-semibold text-slate-700 text-lg transition-all" placeholder="Search by Name, UID or Hub location...">
-                <button id="clearBtn" onclick="clearSearch()" class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 hidden">
-                    <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
-                </button>
             </div>
 
-            <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto">
-                <select id="statusFilter" onchange="render()" class="flex-grow bg-slate-50 border-none px-6 py-5 rounded-2xl font-bold text-slate-600 outline-none text-sm cursor-pointer hover:bg-slate-100 transition-all">
-                    <option value="all">All Students</option>
+            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                <select id="statusFilter" onchange="render()" class="bg-slate-50 border border-slate-200 px-4 py-4 rounded-xl font-bold text-slate-600 outline-none text-sm min-w-[200px]">
+                    <option value="all">All Records</option>
                     <option value="yes">Status: Present</option>
-                    <option value="no">Status: Absent</option>
-                    <option value="pending">Status: Pending</option>
+                    <option value="no">Status: Absentia</option>
+                    <option value="arrived">Arrival: Confirmed</option>
+                    <option value="not_arrived">Arrival: Pending</option>
                 </select>
-                <button onclick="toggleForm()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-5 rounded-2xl font-black text-xs uppercase shadow-xl transform active:scale-95 transition-all">Add Student</button>
-                <button onclick="exportData()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-5 rounded-2xl font-black text-xs uppercase shadow-xl flex items-center gap-2 transform active:scale-95 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Download
+                <button onclick="exportData()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-4 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg">
+                    Download Excel
                 </button>
             </div>
         </div>
 
-        <!-- Registration Form (Animated) -->
-        <div id="formContainer" class="enroll-dropdown mb-10">
-            <div class="glass-card p-10 bg-white border-2 border-emerald-100 shadow-2xl">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 id="formTitle" class="text-2xl font-black text-emerald-800 uppercase tracking-tight">Student Registration</h3>
-                    <button onclick="toggleForm()" class="text-slate-400 hover:text-red-500 font-bold transition-colors text-xl">✖</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2">UID Number</label>
-                        <input type="text" id="fUID" class="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Full Name</label>
-                        <input type="text" id="fName" class="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Hub Location</label>
-                        <input type="text" id="fHub" class="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Course Name</label>
-                        <input type="text" id="fCourse" class="w-full px-6 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
-                    </div>
-                </div>
-                <button onclick="saveStudent()" class="mt-10 w-full bg-emerald-600 text-white rounded-2xl font-black py-6 hover:bg-emerald-700 shadow-2xl transform active:scale-[0.99] transition-all uppercase tracking-widest">Save Student Record</button>
-            </div>
-        </div>
-
-        <!-- Main Table -->
-        <div class="glass-card shadow-2xl overflow-hidden bg-white/80">
+        <!-- Table -->
+        <div class="glass-card overflow-hidden shadow-2xl bg-white">
             <div class="overflow-x-auto">
-                <table class="w-full text-left min-w-[1200px]">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50/50 border-b border-slate-200">
-                            <th class="px-8 py-7 text-[11px] font-black text-slate-400 uppercase tracking-tighter">Student Profile</th>
-                            <th class="px-8 py-7 text-[11px] font-black text-slate-400 uppercase tracking-tighter">Hub Center</th>
-                            <th class="px-8 py-7 text-[11px] font-black text-slate-400 uppercase tracking-tighter">Program</th>
-                            <th class="px-8 py-7 text-[11px] font-black text-slate-400 uppercase tracking-tighter text-center">Attendance</th>
-                            <th class="px-8 py-7 text-[11px] font-black text-slate-400 uppercase tracking-tighter text-center">Guardians</th>
-                            <th class="px-8 py-7 text-[11px] font-black text-slate-400 uppercase tracking-tighter text-right">Actions</th>
+                        <tr class="bg-slate-100 border-b border-slate-200">
+                            <!-- 1. Serial Number Column -->
+                            <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">S.No</th>
+                            <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">Student Profile</th>
+                            <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">Hub Center</th>
+                            <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase text-center">Data Status</th>
+                            <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase text-center">Confirm Arrival</th>
+                            <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase text-center">Guardians</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
+                    <tbody id="tableBody" class="divide-y divide-slate-200">
+                        <!-- Data will load here -->
+                    </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Floating UI -->
     <div id="toast"></div>
-    <div id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-    </div>
 
     <script>
-        // --- MASTER DATA SECTION ---
-        // PASTE YOUR JSON DATA ARRAY HERE
+        // --- DATA SECTION ---
+        // PASTE YOUR JSON DATA ARRAY INSIDE THE BRACKETS [] BELOW
         const rawData = [
   {
     "Universal Student ID": "22050154",
@@ -7364,35 +7293,42 @@
     "Hub Name": "Funfirst Global Skillers Private Limited, Mumbai-City",
     "Present / Absentia": "Present"
   }
-];
+]; 
 
-        let students = JSON.parse(localStorage.getItem('tiss_db_v6')) || [];
-        let editingId = null;
+        let students = JSON.parse(localStorage.getItem('tiss_arrival_final_v1')) || [];
 
-        // Initialize from rawData if storage is empty
-        if (students.length === 0 && rawData.length > 0) {
-            students = rawData.map(item => ({
-                id: item["Universal Student ID"] || Math.random().toString(36).substr(2, 9),
-                uid: item["Universal Student ID"] || "N/A",
-                name: item["Name of Student"],
-                course: item["Course Name"],
-                hub: item["Hub Name"],
-                status: item["Present / Absentia"] === "Present" ? "yes" : 
-                        (item["Present / Absentia"] === "Absentia" ? "no" : "pending"),
-                guardians: 0
-            }));
-            saveAndSync();
+        function initData() {
+            if (rawData.length > 0) {
+                const existingIds = new Set(students.map(s => s.uid));
+                rawData.forEach((item, idx) => {
+                    const uid = item["Universal Student ID"] || `TEMP-${idx}`;
+                    if (!existingIds.has(uid)) {
+                        students.push({
+                            id: uid + Math.random(), 
+                            uid: uid,
+                            name: item["Name of Student"],
+                            course: item["Course Name"],
+                            hub: item["Hub Name"],
+                            status: item["Present / Absentia"] === "Present" ? "yes" : "no",
+                            confirmed: false,
+                            guardians: 0
+                        });
+                    }
+                });
+                save();
+            }
         }
 
-        function saveAndSync() {
-            localStorage.setItem('tiss_db_v6', JSON.stringify(students));
-            updateStatsUI();
+        function save() {
+            localStorage.setItem('tiss_arrival_final_v1', JSON.stringify(students));
+            updateStats();
         }
 
-        function updateStatsUI() {
+        function updateStats() {
             document.getElementById('statTotal').innerText = students.length;
             document.getElementById('statPresent').innerText = students.filter(x => x.status === 'yes').length;
             document.getElementById('statAbsent').innerText = students.filter(x => x.status === 'no').length;
+            document.getElementById('statConfirmed').innerText = students.filter(x => x.confirmed).length;
             const totalGuards = students.reduce((acc, curr) => acc + (parseInt(curr.guardians) || 0), 0);
             document.getElementById('statGuardians').innerText = totalGuards;
         }
@@ -7402,156 +7338,115 @@
             const filter = document.getElementById('statusFilter').value;
             const tableBody = document.getElementById('tableBody');
             
-            document.getElementById('clearBtn').classList.toggle('hidden', query === '');
-
             const filtered = students.filter(s => {
-                const matchesSearch = s.name.toLowerCase().includes(query) || 
-                                     s.uid.toLowerCase().includes(query) || 
-                                     s.hub.toLowerCase().includes(query);
-                const matchesFilter = filter === 'all' || s.status === filter;
+                const matchesSearch = (s.name || "").toLowerCase().includes(query) || 
+                                     (s.uid || "").toLowerCase().includes(query) || 
+                                     (s.hub || "").toLowerCase().includes(query);
+                
+                let matchesFilter = true;
+                if (filter === 'yes' || filter === 'no') matchesFilter = s.status === filter;
+                if (filter === 'arrived') matchesFilter = s.confirmed === true;
+                if (filter === 'not_arrived') matchesFilter = s.confirmed === false;
+                
                 return matchesSearch && matchesFilter;
             });
 
-            tableBody.innerHTML = filtered.map((s) => {
-                const rowClass = s.status === 'yes' ? 'row-present' : 
-                               (s.status === 'no' ? 'row-absent' : 'row-pending');
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400 font-bold">No records found.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map((s, index) => {
+                const rowClass = s.status === 'yes' ? 'row-present' : 'row-absentia';
+                
                 return `
-                <tr class="${rowClass} transition-all">
-                    <td class="px-8 py-6">
-                        <div class="text-base font-extrabold text-slate-800">${s.name}</div>
-                        <div class="text-[10px] font-mono text-emerald-600 font-black uppercase mt-1 tracking-widest">${s.uid}</div>
+                <tr class="${rowClass} transition-colors">
+                    <td class="px-6 py-4 font-bold text-slate-500 text-xs">${index + 1}</td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-bold text-slate-800">${s.name}</div>
+                        <div class="text-[10px] font-mono text-slate-500 uppercase mt-0.5">UID: ${s.uid}</div>
                     </td>
-                    <td class="px-8 py-6 text-xs font-bold text-slate-500 italic max-w-[200px] truncate">${s.hub}</td>
-                    <td class="px-8 py-6 text-xs font-black text-slate-600 max-w-[200px] truncate">${s.course}</td>
-                    <td class="px-8 py-6">
-                        <div class="flex justify-center gap-2">
-                            <button onclick="setStatus('${s.id}', 'yes')" class="btn-yes px-5 py-3 rounded-xl text-[10px] font-black ${s.status === 'yes' ? 'active' : ''}">PRESENT</button>
-                            <button onclick="setStatus('${s.id}', 'no')" class="btn-no px-5 py-3 rounded-xl text-[10px] font-black ${s.status === 'no' ? 'active' : ''}">ABSENT</button>
-                        </div>
+                    <td class="px-6 py-4 text-[11px] font-semibold text-slate-500 italic max-w-[200px] truncate">${s.hub}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase border ${s.status === 'yes' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'}">
+                            ${s.status === 'yes' ? 'Present' : 'Absentia'}
+                        </span>
                     </td>
-                    <td class="px-8 py-6 text-center">
-                        <input type="number" min="0" value="${s.guardians}" onchange="setGuardians('${s.id}', this.value)" 
-                               class="w-16 py-3 bg-slate-50 border-2 border-transparent focus:border-emerald-400 rounded-xl text-center font-black text-base outline-none transition-all">
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="toggleArrival('${s.id}')" 
+                                class="btn-confirm px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider ${s.confirmed ? 'active' : ''}">
+                            ${s.confirmed ? '✓ Arrived' : 'Confirm'}
+                        </button>
                     </td>
-                    <td class="px-8 py-6 text-right">
-                        <div class="flex justify-end gap-3">
-                            <button onclick="editEntry('${s.id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2.5 2.5 0 113.536 3.536L12 18H8v-4L19.586 3.414z"></path></svg>
-                            </button>
-                            <button onclick="deleteEntry('${s.id}')" class="p-2 text-red-400 hover:bg-red-50 rounded-lg">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
+                    <td class="px-6 py-4 text-center">
+                        <input type="number" min="0" 
+                               value="${s.guardians || ''}" 
+                               placeholder="0"
+                               onkeydown="if(event.key==='Enter') { this.blur(); }"
+                               onchange="setGuardians('${s.id}', this.value)" 
+                               class="w-14 py-2 bg-white border border-slate-300 focus:border-blue-500 rounded-lg text-center font-bold text-sm outline-none">
                     </td>
                 </tr>`;
             }).join('');
-            updateStatsUI();
+            updateStats();
         }
 
-        // Feature Functions
-        function toggleForm() {
-            const container = document.getElementById('formContainer');
-            container.classList.toggle('active');
-            if(!container.classList.contains('active')) resetForm();
-        }
-
-        function setStatus(id, status) {
+        function toggleArrival(id) {
             const s = students.find(x => x.id === id);
-            s.status = s.status === status ? 'pending' : status;
-            saveAndSync(); render();
+            if (s) {
+                s.confirmed = !s.confirmed;
+                save();
+                render();
+                if(s.confirmed) showToast(`Arrived: ${s.name}`);
+            }
         }
 
         function setGuardians(id, val) {
-            students.find(x => x.id === id).guardians = parseInt(val) || 0;
-            saveAndSync();
-        }
-
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            render();
-        }
-
-        function resetForm() {
-            editingId = null;
-            document.getElementById('fUID').value = '';
-            document.getElementById('fName').value = '';
-            document.getElementById('fHub').value = '';
-            document.getElementById('fCourse').value = '';
-            document.getElementById('formTitle').innerText = "Student Registration";
-        }
-
-        function saveStudent() {
-            const data = {
-                uid: document.getElementById('fUID').value,
-                name: document.getElementById('fName').value,
-                hub: document.getElementById('fHub').value,
-                course: document.getElementById('fCourse').value
-            };
-            if(!data.uid || !data.name) return showToast("UID and Name are required!");
-            if(editingId) {
-                Object.assign(students.find(x => x.id === editingId), data);
-                showToast("Record Updated");
-            } else {
-                students.unshift({ ...data, id: Date.now().toString(), status: 'pending', guardians: 0 });
-                showToast("Student Registered");
-            }
-            saveAndSync(); toggleForm(); render();
-        }
-
-        function editEntry(id) {
             const s = students.find(x => x.id === id);
-            editingId = id;
-            document.getElementById('fUID').value = s.uid;
-            document.getElementById('fName').value = s.name;
-            document.getElementById('fHub').value = s.hub;
-            document.getElementById('fCourse').value = s.course;
-            document.getElementById('formTitle').innerText = "Update Info";
-            document.getElementById('formContainer').classList.add('active');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function deleteEntry(id) {
-            if(confirm("Permanently delete this record?")) {
-                students = students.filter(x => x.id !== id);
-                saveAndSync(); render(); showToast("Record Removed");
+            if (s) {
+                s.guardians = parseInt(val) || 0;
+                save();
             }
         }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg; t.className = "show";
-            setTimeout(() => t.className = "", 3000);
+            setTimeout(() => t.className = "", 2500);
         }
 
+        // 6. Updated Export Function with full counts
         function exportData() {
+            const totalPresent = students.filter(x => x.status === 'yes').length;
+            const totalAbsentia = students.filter(x => x.status === 'no').length;
+            const totalArrived = students.filter(x => x.confirmed).length;
             const totalGuards = students.reduce((acc, curr) => acc + (parseInt(curr.guardians) || 0), 0);
+
             const exportDataArray = [
-                ["TISS CONVOCATION ATTENDANCE REPORT"],
+                ["TISS SSE CONVOCATION ARRIVAL REPORT"],
                 ["Category", "Count"],
-                ["Total Registered", students.length],
-                ["Present", students.filter(x => x.status === 'yes').length],
-                ["Absent", students.filter(x => x.status === 'no').length],
-                ["Guardians", totalGuards],
+                ["Total Records", students.length],
+                ["Data Status: Present", totalPresent], // Added as requested
+                ["Data Status: Absentia", totalAbsentia], // Added as requested
+                ["Actual Confirmed Arrivals", totalArrived],
+                ["Total Guardians Count", totalGuards],
                 [],
-                ["UID", "NAME", "HUB", "COURSE", "STATUS", "GUARDIANS"]
+                ["S.No", "UID", "Student Name", "Hub Center", "Course Name", "Data Status", "Arrival Confirmed", "Guardians"]
             ];
-            students.forEach(s => exportDataArray.push([s.uid, s.name, s.hub, s.course, s.status.toUpperCase(), s.guardians]));
+
+            students.forEach((s, idx) => exportDataArray.push([
+                idx + 1, s.uid, s.name, s.hub, s.course, 
+                s.status === 'yes' ? 'PRESENT' : 'ABSENTIA', 
+                s.confirmed ? 'YES' : 'NO', s.guardians
+            ]));
+
             const ws = XLSX.utils.aoa_to_sheet(exportDataArray);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-            XLSX.writeFile(wb, "TISS_Attendance_Report.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Attendance_Report");
+            XLSX.writeFile(wb, "TISS_Attendance_Final_Report.xlsx");
         }
 
-        // Back to Top Logic
-        window.onscroll = function() {
-            const btn = document.getElementById("backToTopBtn");
-            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                btn.classList.add("visible");
-            } else {
-                btn.classList.remove("visible");
-            }
-        };
-
+        initData();
         render();
     </script>
 </body>
