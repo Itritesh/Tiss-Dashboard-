@@ -18,6 +18,7 @@
             background: #f8fafc;
             color: #1e293b;
             min-height: 100vh;
+            scroll-behavior: smooth;
         }
 
         .gold-brand {
@@ -38,13 +39,13 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
-        /* 3. Present / Absentia row coloring */
-        .row-present { background-color: #f0fdf4 !important; } /* Light Green */
-        .row-absentia { background-color: #fef2f2 !important; } /* Light Red */
+        /* Present / Absentia row coloring */
+        .row-present { background-color: #f0fdf4 !important; } 
+        .row-absentia { background-color: #fef2f2 !important; } 
         .row-present:hover { background-color: #dcfce7 !important; }
         .row-absentia:hover { background-color: #fee2e2 !important; }
 
-        /* 2. Confirm Button Styles */
+        /* Confirm Button Styles */
         .btn-confirm { @apply border-2 border-slate-300 text-slate-500 hover:bg-slate-100 transition-all duration-200; }
         .btn-confirm.active { 
             @apply bg-blue-600 border-blue-700 text-white scale-105; 
@@ -57,6 +58,16 @@
         .stat-absent { border-top: 4px solid #ef4444; }
         .stat-arrived { border-top: 4px solid #2563eb; }
         .stat-guardians { border-top: 4px solid #f59e0b; }
+
+        /* Back to Top Button */
+        #backToTop {
+            position: fixed; bottom: 30px; right: 30px;
+            display: none; background: #065f46; color: white;
+            width: 50px; height: 50px; border-radius: 50%;
+            cursor: pointer; z-index: 1000; transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        #backToTop:hover { background: #047857; transform: translateY(-5px); }
 
         #toast { 
             visibility: hidden; min-width: 250px; background-color: #1e293b; color: white; 
@@ -84,7 +95,7 @@
 
     <main class="max-w-[1600px] mx-auto px-4">
         
-        <!-- 5. Summary Cards Section -->
+        <!-- Summary Cards (5 Columns) -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-10 -mt-20 relative z-10">
             <div class="glass-card p-6 stat-total">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Students</p>
@@ -111,21 +122,25 @@
         <!-- Controls -->
         <div class="glass-card p-4 mb-8 flex flex-col lg:flex-row items-center gap-4 sticky top-4 z-50 shadow-xl">
             <div class="relative flex-grow w-full">
-                <input type="text" id="searchInput" oninput="render()" class="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-700 transition-all" placeholder="Search by Name, UID or Hub...">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+                <input type="text" id="searchInput" oninput="toggleX()" class="w-full pl-12 pr-12 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-slate-700 transition-all" placeholder="Search by Name, UID or Hub...">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 pointer-events-none">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
+                <!-- X Button to clear search -->
+                <button id="clearSearch" onclick="clearSearchText()" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-red-500 hidden">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 001.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                </button>
             </div>
 
             <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                <select id="statusFilter" onchange="render()" class="bg-slate-50 border border-slate-200 px-4 py-4 rounded-xl font-bold text-slate-600 outline-none text-sm min-w-[200px]">
+                <select id="statusFilter" onchange="render()" class="bg-slate-50 border border-slate-200 px-4 py-4 rounded-xl font-bold text-slate-600 outline-none text-sm min-w-[200px] cursor-pointer">
                     <option value="all">All Records</option>
                     <option value="yes">Status: Present</option>
                     <option value="no">Status: Absentia</option>
                     <option value="arrived">Arrival: Confirmed</option>
                     <option value="not_arrived">Arrival: Pending</option>
                 </select>
-                <button onclick="exportData()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-4 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg">
+                <button onclick="exportData()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-4 rounded-xl font-bold text-sm transition-all shadow-lg active:scale-95">
                     Download Excel
                 </button>
             </div>
@@ -137,7 +152,6 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200">
-                            <!-- 1. Serial Number Column -->
                             <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">S.No</th>
                             <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">Student Profile</th>
                             <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase">Hub Center</th>
@@ -146,19 +160,21 @@
                             <th class="px-6 py-5 text-[11px] font-black text-slate-500 uppercase text-center">Guardians</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-200">
-                        <!-- Data will load here -->
-                    </tbody>
+                    <tbody id="tableBody" class="divide-y divide-slate-200"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
+    <!-- Back to Top Button -->
+    <button id="backToTop" onclick="scrollToTop()" class="flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
+    </button>
+
     <div id="toast"></div>
 
     <script>
         // --- DATA SECTION ---
-        // PASTE YOUR JSON DATA ARRAY INSIDE THE BRACKETS [] BELOW
         const rawData = [
   {
     "Universal Student ID": "22050154",
@@ -7293,15 +7309,15 @@
     "Hub Name": "Funfirst Global Skillers Private Limited, Mumbai-City",
     "Present / Absentia": "Present"
   }
-]; 
+]; // Paste your JSON here
 
-        let students = JSON.parse(localStorage.getItem('tiss_arrival_final_v1')) || [];
+        let students = JSON.parse(localStorage.getItem('tiss_arrival_final_v2')) || [];
 
         function initData() {
             if (rawData.length > 0) {
                 const existingIds = new Set(students.map(s => s.uid));
                 rawData.forEach((item, idx) => {
-                    const uid = item["Universal Student ID"] || `TEMP-${idx}`;
+                    const uid = item["Universal Student ID"] || `ID-${idx}`;
                     if (!existingIds.has(uid)) {
                         students.push({
                             id: uid + Math.random(), 
@@ -7320,7 +7336,7 @@
         }
 
         function save() {
-            localStorage.setItem('tiss_arrival_final_v1', JSON.stringify(students));
+            localStorage.setItem('tiss_arrival_final_v2', JSON.stringify(students));
             updateStats();
         }
 
@@ -7331,6 +7347,18 @@
             document.getElementById('statConfirmed').innerText = students.filter(x => x.confirmed).length;
             const totalGuards = students.reduce((acc, curr) => acc + (parseInt(curr.guardians) || 0), 0);
             document.getElementById('statGuardians').innerText = totalGuards;
+        }
+
+        function toggleX() {
+            const input = document.getElementById('searchInput');
+            const xBtn = document.getElementById('clearSearch');
+            xBtn.style.display = input.value.length > 0 ? 'flex' : 'none';
+            render();
+        }
+
+        function clearSearchText() {
+            document.getElementById('searchInput').value = '';
+            toggleX();
         }
 
         function render() {
@@ -7358,7 +7386,6 @@
 
             tableBody.innerHTML = filtered.map((s, index) => {
                 const rowClass = s.status === 'yes' ? 'row-present' : 'row-absentia';
-                
                 return `
                 <tr class="${rowClass} transition-colors">
                     <td class="px-6 py-4 font-bold text-slate-500 text-xs">${index + 1}</td>
@@ -7379,9 +7406,7 @@
                         </button>
                     </td>
                     <td class="px-6 py-4 text-center">
-                        <input type="number" min="0" 
-                               value="${s.guardians || ''}" 
-                               placeholder="0"
+                        <input type="number" min="0" value="${s.guardians || ''}" placeholder="0"
                                onkeydown="if(event.key==='Enter') { this.blur(); }"
                                onchange="setGuardians('${s.id}', this.value)" 
                                class="w-14 py-2 bg-white border border-slate-300 focus:border-blue-500 rounded-lg text-center font-bold text-sm outline-none">
@@ -7397,7 +7422,7 @@
                 s.confirmed = !s.confirmed;
                 save();
                 render();
-                if(s.confirmed) showToast(`Arrived: ${s.name}`);
+                if(s.confirmed) showToast(`Arrival confirmed for ${s.name}`);
             }
         }
 
@@ -7415,36 +7440,31 @@
             setTimeout(() => t.className = "", 2500);
         }
 
-        // 6. Updated Export Function with full counts
         function exportData() {
-            const totalPresent = students.filter(x => x.status === 'yes').length;
-            const totalAbsentia = students.filter(x => x.status === 'no').length;
-            const totalArrived = students.filter(x => x.confirmed).length;
-            const totalGuards = students.reduce((acc, curr) => acc + (parseInt(curr.guardians) || 0), 0);
-
             const exportDataArray = [
                 ["TISS SSE CONVOCATION ARRIVAL REPORT"],
                 ["Category", "Count"],
                 ["Total Records", students.length],
-                ["Data Status: Present", totalPresent], // Added as requested
-                ["Data Status: Absentia", totalAbsentia], // Added as requested
-                ["Actual Confirmed Arrivals", totalArrived],
-                ["Total Guardians Count", totalGuards],
+                ["Data Status: Present", students.filter(x => x.status === 'yes').length],
+                ["Data Status: Absentia", students.filter(x => x.status === 'no').length],
+                ["Actual Confirmed Arrivals", students.filter(x => x.confirmed).length],
+                ["Total Guardians", students.reduce((acc, curr) => acc + (parseInt(curr.guardians) || 0), 0)],
                 [],
-                ["S.No", "UID", "Student Name", "Hub Center", "Course Name", "Data Status", "Arrival Confirmed", "Guardians"]
+                ["S.No", "UID", "Student Name", "Hub", "Course", "Status", "Arrived", "Guardians"]
             ];
-
-            students.forEach((s, idx) => exportDataArray.push([
-                idx + 1, s.uid, s.name, s.hub, s.course, 
-                s.status === 'yes' ? 'PRESENT' : 'ABSENTIA', 
-                s.confirmed ? 'YES' : 'NO', s.guardians
-            ]));
-
+            students.forEach((s, i) => exportDataArray.push([i+1, s.uid, s.name, s.hub, s.course, s.status==='yes'?'PRESENT':'ABSENTIA', s.confirmed?'YES':'NO', s.guardians]));
             const ws = XLSX.utils.aoa_to_sheet(exportDataArray);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Attendance_Report");
-            XLSX.writeFile(wb, "TISS_Attendance_Final_Report.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+            XLSX.writeFile(wb, "TISS_Arrival_Report.xlsx");
         }
+
+        // Scroll Logic
+        window.onscroll = function() {
+            const btn = document.getElementById("backToTop");
+            btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "flex" : "none";
+        };
+        function scrollToTop() { window.scrollTo({top: 0, behavior: 'smooth'}); }
 
         initData();
         render();
